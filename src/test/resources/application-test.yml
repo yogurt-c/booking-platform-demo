@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: booking-platform-test
+
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/test-booking-platform
+
+  datasource:
+    url: jdbc:h2:mem:test-booking-platform
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+de:
+  flapdoodle:
+    mongodb:
+      embedded:
+        version: 6.0.9
+
+logging:
+  level:
+    org.springframework: WARN
+    io.yugurt.booking_platform: DEBUG
