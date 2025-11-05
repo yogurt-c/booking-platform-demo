@@ -1,3 +1,35 @@
 spring:
   application:
     name: booking-platform
+
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: booking-platform
+
+  datasource:
+    url: jdbc:h2:mem:booking-platform
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+
+logging:
+  level:
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
