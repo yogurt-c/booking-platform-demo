@@ -1,7 +1,10 @@
 package io.yugurt.booking_platform.controller;
 
 import io.yugurt.booking_platform.dto.request.AccommodationCreateRequest;
+import io.yugurt.booking_platform.dto.request.CursorPageRequest;
 import io.yugurt.booking_platform.dto.response.AccommodationDetailResponse;
+import io.yugurt.booking_platform.dto.response.AccommodationSummaryResponse;
+import io.yugurt.booking_platform.dto.response.CursorPageResponse;
 import io.yugurt.booking_platform.service.AccommodationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,5 +27,11 @@ public class AccommodationController {
     public AccommodationDetailResponse getAccommodation(@PathVariable String id) {
 
         return accommodationService.getAccommodation(id);
+    }
+
+    @GetMapping
+    public CursorPageResponse<AccommodationSummaryResponse> getAccommodations(@ModelAttribute @Valid CursorPageRequest request) {
+
+        return accommodationService.getAccommodations(request);
     }
 }

@@ -1,13 +1,17 @@
 package io.yugurt.booking_platform.dto.response;
 
+import io.yugurt.booking_platform.domain.enums.Amenity;
 import io.yugurt.booking_platform.domain.nosql.Accommodation;
+
+import java.util.Set;
 
 public record AccommodationSummaryResponse(
         String id,
         String name,
         String type,
         String address,
-        String thumbnailUrl
+        String thumbnailUrl,
+        Set<Amenity> amenities
 ) {
     public static AccommodationSummaryResponse from(Accommodation accommodation) {
         String thumbnail = accommodation.getImageUrls() != null && !accommodation.getImageUrls().isEmpty()
@@ -19,7 +23,8 @@ public record AccommodationSummaryResponse(
                 accommodation.getName(),
                 accommodation.getType(),
                 accommodation.getAddress(),
-                thumbnail
+                thumbnail,
+                accommodation.getAmenities()
         );
     }
 }
