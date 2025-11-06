@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -121,5 +122,69 @@ class AccommodationControllerTest {
             .andDo(print())
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.errorCode").value(ErrorCode.ACCOM_NOT_FOUND.name()));
+    }
+
+    @Test
+    @DisplayName("숙박 업소 목록 조회 - 첫 페이지")
+    void getAccommodations() throws Exception {
+        for (int i = 1; i <= 5; i++) {
+            accommodationRepository.save(
+                Accommodation.builder()
+                    .name("호텔 " + i)
+                    .type("호텔")
+                    .address("서울특별시 강남구")
+                    .imageUrls(List.of("http://localhost:8080/image.jpg"))
+                    .amenities(Set.of(Amenity.WIFI))
+                    .build()
+            );
+        }
+
+        mockMvc.perform(get("/api/accommodations")
+                .param("size", "3"))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.content.length()").value(3))
+            .andExpect(jsonPath("$.content[0].id").exists())
+            .andExpect(jsonPath("$.content[0].name").exists())
+            .andExpect(jsonPath("$.content[0].thumbnailUrl").exists())
+            .andExpect(jsonPath("$.content[0].amenities").isArray())
+            .andExpect(jsonPath("$.nextCursor").exists())
+            .andExpect(jsonPath("$.hasNext").value(true))
+            .andExpect(jsonPath("$.size").value(3));
+    }
+
+    @Test
+    @DisplayName("숙박 업소 목록 조회 - cursor로 다음 페이지")
+    void getAccommodationsWithCursor() throws Exception {
+        List<Accommodation> savedList = List.of(
+            accommodationRepository.save(Accommodation.builder().name("호텔 1").type("호텔").address("주소").build()),
+            accommodationRepository.save(Accommodation.builder().name("호텔 2").type("호텔").address("주소").build()),
+            accommodationRepository.save(Accommodation.builder().name("호텔 3").type("호텔").address("주소").build())
+        );
+
+        var sortedList = accommodationRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
+        String cursor = sortedList.get(0).getId();
+
+        mockMvc.perform(get("/api/accommodations")
+                .param("cursor", cursor)
+                .param("size", "2"))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.content.length()").value(2))
+            .andExpect(jsonPath("$.hasNext").value(false));
+    }
+
+    @Test
+    @DisplayName("숙박 업소 목록 조회 - 빈 결과")
+    void getAccommodationsEmpty() throws Exception {
+        mockMvc.perform(get("/api/accommodations"))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.content.length()").value(0))
+            .andExpect(jsonPath("$.hasNext").value(false))
+            .andExpect(jsonPath("$.nextCursor").isEmpty());
     }
 }
