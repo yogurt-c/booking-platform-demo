@@ -5,10 +5,7 @@ import io.yugurt.booking_platform.dto.response.AccommodationDetailResponse;
 import io.yugurt.booking_platform.service.AccommodationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/accommodations")
@@ -21,5 +18,11 @@ public class AccommodationController {
     public AccommodationDetailResponse createAccommodation(@Valid @RequestBody AccommodationCreateRequest request) {
 
         return accommodationService.createAccommodation(request);
+    }
+
+    @GetMapping("/{id}")
+    public AccommodationDetailResponse getAccommodation(@PathVariable String id) {
+
+        return accommodationService.getAccommodation(id);
     }
 }
