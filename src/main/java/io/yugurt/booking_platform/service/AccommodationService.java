@@ -2,6 +2,7 @@ package io.yugurt.booking_platform.service;
 
 import io.yugurt.booking_platform.domain.nosql.Accommodation;
 import io.yugurt.booking_platform.dto.request.AccommodationCreateRequest;
+import io.yugurt.booking_platform.dto.request.AccommodationUpdateRequest;
 import io.yugurt.booking_platform.dto.request.CursorPageRequest;
 import io.yugurt.booking_platform.dto.response.AccommodationDetailResponse;
 import io.yugurt.booking_platform.dto.response.AccommodationSummaryResponse;
@@ -61,5 +62,30 @@ public class AccommodationService {
             request.size(),
             AccommodationSummaryResponse::id
         );
+    }
+
+    public AccommodationDetailResponse updateAccommodation(String id, AccommodationUpdateRequest request) {
+        Accommodation accommodation = accommodationRepository.findById(id)
+            .orElseThrow(AccommodationNotFoundException::new);
+
+        accommodation.setName(request.name());
+        accommodation.setType(request.type());
+        accommodation.setAddress(request.address());
+        accommodation.setDescription(request.description());
+        accommodation.setImageUrls(request.imageUrls());
+        accommodation.setAmenities(request.amenities());
+        accommodation.setLatitude(request.latitude());
+        accommodation.setLongitude(request.longitude());
+
+        accommodationRepository.save(accommodation);
+
+        return AccommodationDetailResponse.from(accommodation);
+    }
+
+    public void deleteAccommodation(String id) {
+        Accommodation accommodation = accommodationRepository.findById(id)
+            .orElseThrow(AccommodationNotFoundException::new);
+
+        accommodationRepository.delete(accommodation);
     }
 }
