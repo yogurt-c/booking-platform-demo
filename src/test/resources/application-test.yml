@@ -30,3 +30,4 @@ logging:
   level:
     org.springframework: WARN
     io.yugurt.booking_platform: DEBUG
+    de.flapdoodle: WARN
