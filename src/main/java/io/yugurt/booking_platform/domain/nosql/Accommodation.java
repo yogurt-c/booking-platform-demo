@@ -44,9 +44,7 @@ public class Accommodation {
 
     private Double longitude;
 
-    /**
-     * 숙박 업소 정보를 수정합니다.
-     */
+
     public void update(AccommodationUpdateRequest request) {
         this.name = request.name();
         this.type = request.type();

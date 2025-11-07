@@ -18,6 +18,7 @@ public record AccommodationDetailResponse(
 ) {
 
     public static AccommodationDetailResponse from(Accommodation accommodation) {
+
         return new AccommodationDetailResponse(
             accommodation.getId(),
             accommodation.getName(),
