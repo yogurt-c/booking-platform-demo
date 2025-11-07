@@ -15,8 +15,16 @@ public enum ErrorCode {
     INVALID_RESERVATION_DATE("체크아웃 날짜는 체크인 날짜보다 이후여야 합니다.", HttpStatus.BAD_REQUEST),
     PAST_RESERVATION_DATE("과거 날짜로 예약할 수 없습니다.", HttpStatus.BAD_REQUEST),
     CANNOT_CANCEL_RESERVATION("체크인 1일 전까지만 취소 가능합니다.", HttpStatus.BAD_REQUEST),
-    ALREADY_CANCELLED_RESERVATION("이미 취소된 예약입니다.", HttpStatus.BAD_REQUEST);
+    ALREADY_CANCELLED_RESERVATION("이미 취소된 예약입니다.", HttpStatus.BAD_REQUEST),
+
+    // Authorization
+    FORBIDDEN("접근 권한이 없습니다.", HttpStatus.FORBIDDEN),
+    NOT_RESOURCE_OWNER("해당 리소스의 소유자가 아닙니다.", HttpStatus.FORBIDDEN);
 
     private final String description;
     private final HttpStatus status;
+
+    public String getMessage() {
+        return description;
+    }
 }
