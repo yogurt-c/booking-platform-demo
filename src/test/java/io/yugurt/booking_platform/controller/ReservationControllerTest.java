@@ -211,4 +211,86 @@ class ReservationControllerTest {
             .andExpect(jsonPath("$.room.roomType").value("디럭스"))
             .andExpect(jsonPath("$.room.maxOccupancy").value(2));
     }
+
+    @Test
+    @DisplayName("내 예약 목록 조회 - 성공")
+    void getMyReservations() throws Exception {
+        var accommodation = accommodationRepository.save(
+            Accommodation.builder()
+                .name("호텔 신라")
+                .type("호텔")
+                .address("서울특별시 중구")
+                .build()
+        );
+
+        var room1 = roomRepository.save(
+            Room.builder()
+                .accommodationId(accommodation.getId())
+                .name("디럭스 더블")
+                .roomType("디럭스")
+                .pricePerNight(new BigDecimal("150000"))
+                .maxOccupancy(2)
+                .build()
+        );
+
+        var room2 = roomRepository.save(
+            Room.builder()
+                .accommodationId(accommodation.getId())
+                .name("스위트룸")
+                .roomType("스위트")
+                .pricePerNight(new BigDecimal("300000"))
+                .maxOccupancy(4)
+                .build()
+        );
+
+        String guestPhone = "010-1234-5678";
+
+        // 같은 전화번호로 2개 예약 생성
+        reservationRepository.save(
+            Reservation.builder()
+                .accommodationId(accommodation.getId())
+                .roomId(room1.getId())
+                .guestName("홍길동")
+                .guestPhone(guestPhone)
+                .checkInDate(LocalDate.now().plusDays(1))
+                .checkOutDate(LocalDate.now().plusDays(3))
+                .build()
+        );
+
+        reservationRepository.save(
+            Reservation.builder()
+                .accommodationId(accommodation.getId())
+                .roomId(room2.getId())
+                .guestName("홍길동")
+                .guestPhone(guestPhone)
+                .checkInDate(LocalDate.now().plusDays(5))
+                .checkOutDate(LocalDate.now().plusDays(7))
+                .build()
+        );
+
+        // 다른 전화번호로 1개 예약 생성 (결과에 포함되지 않아야 함)
+        reservationRepository.save(
+            Reservation.builder()
+                .accommodationId(accommodation.getId())
+                .roomId(room1.getId())
+                .guestName("김철수")
+                .guestPhone("010-9999-8888")
+                .checkInDate(LocalDate.now().plusDays(10))
+                .checkOutDate(LocalDate.now().plusDays(12))
+                .build()
+        );
+
+        mockMvc.perform(get("/api/reservations")
+                .param("guestPhone", guestPhone))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isArray())
+            .andExpect(jsonPath("$.length()").value(2))
+            .andExpect(jsonPath("$[0].guestPhone").value(guestPhone))
+            .andExpect(jsonPath("$[0].accommodation").exists())
+            .andExpect(jsonPath("$[0].room").exists())
+            .andExpect(jsonPath("$[1].guestPhone").value(guestPhone))
+            .andExpect(jsonPath("$[1].accommodation").exists())
+            .andExpect(jsonPath("$[1].room").exists());
+    }
 }

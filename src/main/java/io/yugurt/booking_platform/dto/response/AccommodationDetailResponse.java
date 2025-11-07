@@ -2,7 +2,6 @@ package io.yugurt.booking_platform.dto.response;
 
 import io.yugurt.booking_platform.domain.enums.Amenity;
 import io.yugurt.booking_platform.domain.nosql.Accommodation;
-
 import java.util.List;
 import java.util.Set;
 
@@ -17,6 +16,7 @@ public record AccommodationDetailResponse(
     Double latitude,
     Double longitude
 ) {
+
     public static AccommodationDetailResponse from(Accommodation accommodation) {
         return new AccommodationDetailResponse(
             accommodation.getId(),

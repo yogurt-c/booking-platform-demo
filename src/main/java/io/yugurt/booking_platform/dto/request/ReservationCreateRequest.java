@@ -2,7 +2,6 @@ package io.yugurt.booking_platform.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-
 import java.time.LocalDate;
 
 public record ReservationCreateRequest(
@@ -24,4 +23,5 @@ public record ReservationCreateRequest(
     @NotNull(message = "체크아웃 날짜는 필수입니다")
     LocalDate checkOutDate
 ) {
+
 }
