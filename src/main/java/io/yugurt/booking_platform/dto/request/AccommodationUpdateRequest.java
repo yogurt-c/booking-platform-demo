@@ -7,23 +7,23 @@ import java.util.List;
 import java.util.Set;
 
 public record AccommodationUpdateRequest(
-        @NotBlank(message = "숙박 업소 이름은 필수입니다")
-        String name,
+    @NotBlank(message = "숙박 업소 이름은 필수입니다")
+    String name,
 
-        @NotBlank(message = "숙박 업소 타입은 필수입니다")
-        String type,
+    @NotBlank(message = "숙박 업소 타입은 필수입니다")
+    String type,
 
-        @NotBlank(message = "주소는 필수입니다")
-        String address,
+    @NotBlank(message = "주소는 필수입니다")
+    String address,
 
-        String description,
+    String description,
 
-        List<String> imageUrls,
+    List<String> imageUrls,
 
-        Set<Amenity> amenities,
+    Set<Amenity> amenities,
 
-        Double latitude,
+    Double latitude,
 
-        Double longitude
+    Double longitude
 ) {
 }

@@ -155,4 +155,60 @@ class ReservationControllerTest {
             .andDo(print())
             .andExpect(status().isConflict());
     }
+
+    @Test
+    @DisplayName("예약 상세 조회 - 성공")
+    void getReservation() throws Exception {
+        var accommodation = accommodationRepository.save(
+            Accommodation.builder()
+                .name("호텔 신라")
+                .type("호텔")
+                .address("서울특별시 중구")
+                .build()
+        );
+
+        var room = roomRepository.save(
+            Room.builder()
+                .accommodationId(accommodation.getId())
+                .name("디럭스 더블")
+                .roomType("디럭스")
+                .pricePerNight(new BigDecimal("150000"))
+                .maxOccupancy(2)
+                .build()
+        );
+
+        String guestName = "홍길동";
+        String guestPhone = "010-1234-5678";
+        LocalDate checkInDate = LocalDate.now().plusDays(1);
+        LocalDate checkOutDate = LocalDate.now().plusDays(3);
+
+        var reservation = reservationRepository.save(
+            Reservation.builder()
+                .accommodationId(accommodation.getId())
+                .roomId(room.getId())
+                .guestName(guestName)
+                .guestPhone(guestPhone)
+                .checkInDate(checkInDate)
+                .checkOutDate(checkOutDate)
+                .build()
+        );
+
+        mockMvc.perform(get("/api/reservations/{id}", reservation.getId()))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(reservation.getId()))
+            .andExpect(jsonPath("$.guestName").value(guestName))
+            .andExpect(jsonPath("$.guestPhone").value(guestPhone))
+            .andExpect(jsonPath("$.checkInDate").value(checkInDate.toString()))
+            .andExpect(jsonPath("$.checkOutDate").value(checkOutDate.toString()))
+            .andExpect(jsonPath("$.status").value("PENDING"))
+            .andExpect(jsonPath("$.accommodation").exists())
+            .andExpect(jsonPath("$.accommodation.id").value(accommodation.getId()))
+            .andExpect(jsonPath("$.accommodation.name").value("호텔 신라"))
+            .andExpect(jsonPath("$.room").exists())
+            .andExpect(jsonPath("$.room.id").value(room.getId()))
+            .andExpect(jsonPath("$.room.name").value("디럭스 더블"))
+            .andExpect(jsonPath("$.room.roomType").value("디럭스"))
+            .andExpect(jsonPath("$.room.maxOccupancy").value(2));
+    }
 }
