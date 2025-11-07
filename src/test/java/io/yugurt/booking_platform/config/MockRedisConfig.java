@@ -12,10 +12,6 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 
-/**
- * 일반 테스트용 Mock RedissonClient
- * 실제 Redis 없이 테스트 가능 (빠른 실행)
- */
 @TestConfiguration
 public class MockRedisConfig {
 
