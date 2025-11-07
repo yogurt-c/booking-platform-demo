@@ -50,12 +50,7 @@ public class RoomService {
         Room room = roomRepository.findById(id)
             .orElseThrow(RoomNotFoundException::new);
 
-        room.setName(request.name());
-        room.setRoomType(request.roomType());
-        room.setPricePerNight(request.pricePerNight());
-        room.setMaxOccupancy(request.maxOccupancy());
-        room.setDescription(request.description());
-
+        room.update(request);
         roomRepository.save(room);
 
         return RoomDetailResponse.from(room);

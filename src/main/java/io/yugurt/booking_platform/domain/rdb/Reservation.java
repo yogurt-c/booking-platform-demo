@@ -1,6 +1,8 @@
 package io.yugurt.booking_platform.domain.rdb;
 
 import io.yugurt.booking_platform.domain.enums.ReservationStatus;
+import io.yugurt.booking_platform.exception.AlreadyCancelledReservationException;
+import io.yugurt.booking_platform.exception.CannotCancelReservationException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -12,9 +14,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -23,11 +26,13 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Entity
 @Table(name = "reservations")
 @EntityListeners(AuditingEntityListener.class)
-@Data
+@Getter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Reservation {
+
+    private static final int CANCELLATION_DEADLINE_DAYS = 1;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -62,4 +67,24 @@ public class Reservation {
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
+
+    
+    public void cancel(LocalDate today) {
+        validateNotCancelled();
+        validateCancellationDeadline(today);
+        this.status = ReservationStatus.CANCELLED;
+    }
+
+    private void validateNotCancelled() {
+        if (this.status == ReservationStatus.CANCELLED) {
+            throw new AlreadyCancelledReservationException();
+        }
+    }
+
+    private void validateCancellationDeadline(LocalDate today) {
+        LocalDate deadline = this.checkInDate.minusDays(CANCELLATION_DEADLINE_DAYS);
+        if (today.isAfter(deadline)) {
+            throw new CannotCancelReservationException();
+        }
+    }
 }
