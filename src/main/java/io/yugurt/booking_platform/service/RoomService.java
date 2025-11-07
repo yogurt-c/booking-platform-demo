@@ -61,4 +61,11 @@ public class RoomService {
 
         return RoomDetailResponse.from(room);
     }
+
+    public void deleteRoom(String id) {
+        Room room = roomRepository.findById(id)
+            .orElseThrow(RoomNotFoundException::new);
+
+        roomRepository.delete(room);
+    }
 }

@@ -6,6 +6,7 @@ import io.yugurt.booking_platform.dto.response.RoomDetailResponse;
 import io.yugurt.booking_platform.service.RoomService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -33,5 +34,12 @@ public class RoomController {
             @Valid @RequestBody RoomUpdateRequest request) {
 
         return roomService.updateRoom(id, request);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteRoom(@PathVariable String id) {
+
+        roomService.deleteRoom(id);
     }
 }

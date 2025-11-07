@@ -244,4 +244,37 @@ class RoomControllerTest {
             .andExpect(jsonPath("$.maxOccupancy").value(updatedMaxOccupancy))
             .andExpect(jsonPath("$.description").value(updatedDescription));
     }
+
+    @Test
+    @DisplayName("객실 삭제 - 성공")
+    void deleteRoom() throws Exception {
+        var accommodation = accommodationRepository.save(
+            Accommodation.builder()
+                .name("호텔 신라")
+                .type("호텔")
+                .address("서울특별시 중구")
+                .build()
+        );
+
+        var room = roomRepository.save(
+            Room.builder()
+                .accommodationId(accommodation.getId())
+                .name("스탠다드 더블")
+                .roomType("스탠다드")
+                .pricePerNight(new BigDecimal("100000"))
+                .maxOccupancy(2)
+                .description("기본 객실")
+                .build()
+        );
+
+        String roomId = room.getId();
+
+        mockMvc.perform(delete("/api/rooms/{id}", roomId))
+            .andDo(print())
+            .andExpect(status().isNoContent());
+
+        // DB에서 삭제 확인
+        var deletedRoom = roomRepository.findById(roomId);
+        assert deletedRoom.isEmpty();
+    }
 }
