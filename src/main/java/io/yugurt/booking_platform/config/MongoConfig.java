@@ -6,4 +6,5 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @Configuration
 @EnableMongoRepositories(basePackages = "io.yugurt.booking_platform.repository.nosql")
 public class MongoConfig {
+
 }
