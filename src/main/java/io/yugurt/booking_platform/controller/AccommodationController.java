@@ -44,8 +44,8 @@ public class AccommodationController {
 
     @PutMapping("/{id}")
     public AccommodationDetailResponse updateAccommodation(
-            @PathVariable String id,
-            @Valid @RequestBody AccommodationUpdateRequest request) {
+        @PathVariable String id,
+        @Valid @RequestBody AccommodationUpdateRequest request) {
 
         return accommodationService.updateAccommodation(id, request);
     }

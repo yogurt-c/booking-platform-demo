@@ -30,8 +30,8 @@ public class RoomController {
 
     @PutMapping("/{id}")
     public RoomDetailResponse updateRoom(
-            @PathVariable String id,
-            @Valid @RequestBody RoomUpdateRequest request) {
+        @PathVariable String id,
+        @Valid @RequestBody RoomUpdateRequest request) {
 
         return roomService.updateRoom(id, request);
     }

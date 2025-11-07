@@ -12,13 +12,13 @@ import java.util.List;
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
     @Query("SELECT r FROM Reservation r " +
-           "WHERE r.roomId = :roomId " +
-           "AND r.status != :cancelledStatus " +
-           "AND NOT (r.checkOutDate <= :checkInDate OR r.checkInDate >= :checkOutDate)")
+        "WHERE r.roomId = :roomId " +
+        "AND r.status != :cancelledStatus " +
+        "AND NOT (r.checkOutDate <= :checkInDate OR r.checkInDate >= :checkOutDate)")
     List<Reservation> findConflictingReservations(
-            @Param("roomId") String roomId,
-            @Param("checkInDate") LocalDate checkInDate,
-            @Param("checkOutDate") LocalDate checkOutDate,
-            @Param("cancelledStatus") ReservationStatus cancelledStatus
+        @Param("roomId") String roomId,
+        @Param("checkInDate") LocalDate checkInDate,
+        @Param("checkOutDate") LocalDate checkOutDate,
+        @Param("cancelledStatus") ReservationStatus cancelledStatus
     );
 }
