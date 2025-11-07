@@ -106,4 +106,14 @@ public class ReservationService {
             })
             .toList();
     }
+
+    @Transactional
+    public void cancelReservation(Long id) {
+        Reservation reservation = reservationRepository.findById(id)
+            .orElseThrow(ReservationNotFoundException::new);
+
+        reservation.setStatus(ReservationStatus.CANCELLED);
+
+        reservationRepository.save(reservation);
+    }
 }
