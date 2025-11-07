@@ -3,6 +3,7 @@ package io.yugurt.booking_platform.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.yugurt.booking_platform.config.RealRedisConfig;
+import io.yugurt.booking_platform.domain.enums.UserRole;
 import io.yugurt.booking_platform.domain.nosql.Accommodation;
 import io.yugurt.booking_platform.domain.nosql.Room;
 import io.yugurt.booking_platform.dto.request.ReservationCreateRequest;
@@ -10,6 +11,7 @@ import io.yugurt.booking_platform.exception.ReservationConflictException;
 import io.yugurt.booking_platform.repository.nosql.AccommodationRepository;
 import io.yugurt.booking_platform.repository.nosql.RoomRepository;
 import io.yugurt.booking_platform.repository.rdb.ReservationRepository;
+import io.yugurt.booking_platform.security.UserContext;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.concurrent.CountDownLatch;
@@ -25,8 +27,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 /**
- * 예약 동시성 테스트
- * RealRedisConfig를 사용하여 실제 Redis 컨테이너로 분산 락 동작 검증
+ * 예약 동시성 테스트 RealRedisConfig를 사용하여 실제 Redis 컨테이너로 분산 락 동작 검증
  */
 @SpringBootTest
 @ActiveProfiles("test")
@@ -99,7 +100,7 @@ class ReservationServiceConcurrencyTest {
                         checkOutDate
                     );
 
-                    reservationService.createReservation(request);
+                    reservationService.createReservation(new UserContext("001", UserRole.GUEST), request);
                     successCount.incrementAndGet();
                 } catch (ReservationConflictException e) {
                     failCount.incrementAndGet();

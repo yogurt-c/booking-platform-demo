@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.yugurt.booking_platform.config.MockRedisConfig;
 import io.yugurt.booking_platform.domain.enums.ReservationStatus;
+import io.yugurt.booking_platform.domain.enums.UserRole;
 import io.yugurt.booking_platform.domain.nosql.Accommodation;
 import io.yugurt.booking_platform.domain.nosql.Room;
 import io.yugurt.booking_platform.domain.rdb.Reservation;
@@ -51,6 +52,11 @@ class ReservationControllerTest {
     @Autowired
     private RoomRepository roomRepository;
 
+    private final String HOST_ID = "HOST-001";
+
+    private final String GUEST_ID = "GUEST-001";
+
+
     @BeforeEach
     void setUp() {
         reservationRepository.deleteAll();
@@ -63,6 +69,7 @@ class ReservationControllerTest {
     void createReservation() throws Exception {
         var accommodation = accommodationRepository.save(
             Accommodation.builder()
+                .ownerId(HOST_ID)
                 .name("호텔 신라")
                 .type("호텔")
                 .address("서울특별시 중구")
@@ -95,6 +102,8 @@ class ReservationControllerTest {
 
         mockMvc.perform(post("/api/reservations")
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("X-User-Id", GUEST_ID)
+                .header("X-User-Role", UserRole.GUEST)
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isOk())
@@ -113,6 +122,7 @@ class ReservationControllerTest {
     void createReservationFailDueToDateConflict() throws Exception {
         var accommodation = accommodationRepository.save(
             Accommodation.builder()
+                .ownerId(HOST_ID)
                 .name("호텔 신라")
                 .type("호텔")
                 .address("서울특별시 중구")
@@ -137,6 +147,7 @@ class ReservationControllerTest {
             Reservation.builder()
                 .accommodationId(accommodation.getId())
                 .roomId(room.getId())
+                .guestId("UNKNOWN")
                 .guestName("김철수")
                 .guestPhone("010-1111-2222")
                 .checkInDate(checkInDate)
@@ -156,6 +167,8 @@ class ReservationControllerTest {
 
         mockMvc.perform(post("/api/reservations")
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("X-User-Id", GUEST_ID)
+                .header("X-User-Role", UserRole.GUEST)
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isConflict());
@@ -166,6 +179,7 @@ class ReservationControllerTest {
     void getReservation() throws Exception {
         var accommodation = accommodationRepository.save(
             Accommodation.builder()
+                .ownerId(HOST_ID)
                 .name("호텔 신라")
                 .type("호텔")
                 .address("서울특별시 중구")
@@ -190,6 +204,7 @@ class ReservationControllerTest {
         var reservation = reservationRepository.save(
             Reservation.builder()
                 .accommodationId(accommodation.getId())
+                .guestId(GUEST_ID)
                 .roomId(room.getId())
                 .guestName(guestName)
                 .guestPhone(guestPhone)
@@ -198,7 +213,9 @@ class ReservationControllerTest {
                 .build()
         );
 
-        mockMvc.perform(get("/api/reservations/{id}", reservation.getId()))
+        mockMvc.perform(get("/api/reservations/{id}", reservation.getId())
+                .header("X-User-Id", GUEST_ID)
+                .header("X-User-Role", UserRole.GUEST))
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(reservation.getId()))
@@ -222,6 +239,7 @@ class ReservationControllerTest {
     void getMyReservations() throws Exception {
         var accommodation = accommodationRepository.save(
             Accommodation.builder()
+                .ownerId(HOST_ID)
                 .name("호텔 신라")
                 .type("호텔")
                 .address("서울특별시 중구")
@@ -250,11 +268,12 @@ class ReservationControllerTest {
 
         String guestPhone = "010-1234-5678";
 
-        // 같은 전화번호로 2개 예약 생성
+        // 같은 게스트 ID로 2개 예약 생성
         reservationRepository.save(
             Reservation.builder()
                 .accommodationId(accommodation.getId())
                 .roomId(room1.getId())
+                .guestId(GUEST_ID)
                 .guestName("홍길동")
                 .guestPhone(guestPhone)
                 .checkInDate(LocalDate.now().plusDays(1))
@@ -266,6 +285,7 @@ class ReservationControllerTest {
             Reservation.builder()
                 .accommodationId(accommodation.getId())
                 .roomId(room2.getId())
+                .guestId(GUEST_ID)
                 .guestName("홍길동")
                 .guestPhone(guestPhone)
                 .checkInDate(LocalDate.now().plusDays(5))
@@ -273,11 +293,12 @@ class ReservationControllerTest {
                 .build()
         );
 
-        // 다른 전화번호로 1개 예약 생성 (결과에 포함되지 않아야 함)
+        // 다른 게스트 ID로 1개 예약 생성 (결과에 포함되지 않아야 함)
         reservationRepository.save(
             Reservation.builder()
                 .accommodationId(accommodation.getId())
                 .roomId(room1.getId())
+                .guestId("GUEST-OTHER")
                 .guestName("김철수")
                 .guestPhone("010-9999-8888")
                 .checkInDate(LocalDate.now().plusDays(10))
@@ -286,7 +307,8 @@ class ReservationControllerTest {
         );
 
         mockMvc.perform(get("/api/reservations")
-                .param("guestPhone", guestPhone))
+                .header("X-User-Id", GUEST_ID)
+                .header("X-User-Role", UserRole.GUEST))
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$").isArray())
@@ -304,6 +326,7 @@ class ReservationControllerTest {
     void cancelReservation() throws Exception {
         var accommodation = accommodationRepository.save(
             Accommodation.builder()
+                .ownerId(HOST_ID)
                 .name("호텔 신라")
                 .type("호텔")
                 .address("서울특별시 중구")
@@ -324,6 +347,7 @@ class ReservationControllerTest {
             Reservation.builder()
                 .accommodationId(accommodation.getId())
                 .roomId(room.getId())
+                .guestId(GUEST_ID)
                 .guestName("홍길동")
                 .guestPhone("010-1234-5678")
                 .checkInDate(LocalDate.now().plusDays(1))
@@ -333,7 +357,9 @@ class ReservationControllerTest {
 
         Long reservationId = reservation.getId();
 
-        mockMvc.perform(delete("/api/reservations/{id}", reservationId))
+        mockMvc.perform(delete("/api/reservations/{id}", reservationId)
+                .header("X-User-Id", GUEST_ID)
+                .header("X-User-Role", UserRole.GUEST))
             .andDo(print())
             .andExpect(status().isNoContent());
 
@@ -348,6 +374,7 @@ class ReservationControllerTest {
     void createReservationFailDueToInvalidDate() throws Exception {
         var accommodation = accommodationRepository.save(
             Accommodation.builder()
+                .ownerId(HOST_ID)
                 .name("호텔 신라")
                 .type("호텔")
                 .address("서울특별시 중구")
@@ -378,6 +405,8 @@ class ReservationControllerTest {
 
         mockMvc.perform(post("/api/reservations")
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("X-User-Id", GUEST_ID)
+                .header("X-User-Role", UserRole.GUEST)
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isBadRequest());
@@ -388,6 +417,7 @@ class ReservationControllerTest {
     void createReservationFailDueToPastDate() throws Exception {
         var accommodation = accommodationRepository.save(
             Accommodation.builder()
+                .ownerId(HOST_ID)
                 .name("호텔 신라")
                 .type("호텔")
                 .address("서울특별시 중구")
@@ -418,6 +448,8 @@ class ReservationControllerTest {
 
         mockMvc.perform(post("/api/reservations")
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("X-User-Id", GUEST_ID)
+                .header("X-User-Role", UserRole.GUEST)
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isBadRequest());
@@ -428,6 +460,7 @@ class ReservationControllerTest {
     void cancelReservationFailDueToCheckInDay() throws Exception {
         var accommodation = accommodationRepository.save(
             Accommodation.builder()
+                .ownerId(HOST_ID)
                 .name("호텔 신라")
                 .type("호텔")
                 .address("서울특별시 중구")
@@ -449,6 +482,7 @@ class ReservationControllerTest {
             Reservation.builder()
                 .accommodationId(accommodation.getId())
                 .roomId(room.getId())
+                .guestId(GUEST_ID)
                 .guestName("홍길동")
                 .guestPhone("010-1234-5678")
                 .checkInDate(LocalDate.now())
@@ -456,7 +490,9 @@ class ReservationControllerTest {
                 .build()
         );
 
-        mockMvc.perform(delete("/api/reservations/{id}", reservation.getId()))
+        mockMvc.perform(delete("/api/reservations/{id}", reservation.getId())
+                .header("X-User-Id", GUEST_ID)
+                .header("X-User-Role", UserRole.GUEST))
             .andDo(print())
             .andExpect(status().isBadRequest());
     }
@@ -466,6 +502,7 @@ class ReservationControllerTest {
     void cancelReservationFailDueToAlreadyCancelled() throws Exception {
         var accommodation = accommodationRepository.save(
             Accommodation.builder()
+                .ownerId(HOST_ID)
                 .name("호텔 신라")
                 .type("호텔")
                 .address("서울특별시 중구")
@@ -486,6 +523,7 @@ class ReservationControllerTest {
             Reservation.builder()
                 .accommodationId(accommodation.getId())
                 .roomId(room.getId())
+                .guestId(GUEST_ID)
                 .guestName("홍길동")
                 .guestPhone("010-1234-5678")
                 .checkInDate(LocalDate.now().plusDays(2))
@@ -494,7 +532,9 @@ class ReservationControllerTest {
                 .build()
         );
 
-        mockMvc.perform(delete("/api/reservations/{id}", reservation.getId()))
+        mockMvc.perform(delete("/api/reservations/{id}", reservation.getId())
+                .header("X-User-Id", GUEST_ID)
+                .header("X-User-Role", UserRole.GUEST))
             .andDo(print())
             .andExpect(status().isBadRequest());
     }

@@ -16,6 +16,9 @@ import io.yugurt.booking_platform.exception.RoomNotFoundException;
 import io.yugurt.booking_platform.repository.nosql.AccommodationRepository;
 import io.yugurt.booking_platform.repository.nosql.RoomRepository;
 import io.yugurt.booking_platform.repository.rdb.ReservationRepository;
+import io.yugurt.booking_platform.security.UserContext;
+import io.yugurt.booking_platform.security.annotation.RequireOwner;
+import io.yugurt.booking_platform.security.annotation.ResourceType;
 import io.yugurt.booking_platform.util.DateTimeUtil;
 import java.time.LocalDate;
 import java.util.List;
@@ -43,7 +46,7 @@ public class ReservationService {
     private final RedissonClient redissonClient;
     private final TransactionTemplate transactionTemplate;
 
-    public ReservationResponse createReservation(ReservationCreateRequest request) {
+    public ReservationResponse createReservation(UserContext user, ReservationCreateRequest request) {
         validateReservationDates(request.checkInDate(), request.checkOutDate());
 
         String lockKey = LOCK_KEY_PREFIX + request.roomId();
@@ -58,7 +61,7 @@ public class ReservationService {
             try {
                 return transactionTemplate.execute(status -> {
                     validateNoConflictingReservations(request);
-                    Reservation reservation = createReservationEntity(request);
+                    Reservation reservation = createReservationEntity(user, request);
                     reservationRepository.save(reservation);
 
                     return ReservationResponse.from(reservation);
@@ -86,10 +89,14 @@ public class ReservationService {
         }
     }
 
-    private Reservation createReservationEntity(ReservationCreateRequest request) {
+    private Reservation createReservationEntity(UserContext user, ReservationCreateRequest request) {
+        // 현재 사용자를 게스트로 설정
+        String guestId = user.userId();
+
         return Reservation.builder()
             .accommodationId(request.accommodationId())
             .roomId(request.roomId())
+            .guestId(guestId)
             .guestName(request.guestName())
             .guestPhone(request.guestPhone())
             .checkInDate(request.checkInDate())
@@ -98,6 +105,7 @@ public class ReservationService {
     }
 
     @Transactional(readOnly = true)
+    @RequireOwner(resourceType = ResourceType.RESERVATION)
     public ReservationDetailResponse getReservation(Long id) {
         Reservation reservation = reservationRepository.findById(id)
             .orElseThrow(ReservationNotFoundException::new);
@@ -112,8 +120,8 @@ public class ReservationService {
     }
 
     @Transactional(readOnly = true)
-    public List<ReservationDetailResponse> getMyReservations(String guestPhone) {
-        List<Reservation> reservations = reservationRepository.findByGuestPhone(guestPhone);
+    public List<ReservationDetailResponse> getMyReservations(UserContext user) {
+        List<Reservation> reservations = reservationRepository.findByGuestId(user.userId());
 
         if (reservations.isEmpty()) {
             return List.of();
@@ -161,6 +169,7 @@ public class ReservationService {
     }
 
     @Transactional
+    @RequireOwner(resourceType = ResourceType.RESERVATION)
     public void cancelReservation(Long id) {
         Reservation reservation = reservationRepository.findById(id)
             .orElseThrow(ReservationNotFoundException::new);

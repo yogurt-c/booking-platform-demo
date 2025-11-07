@@ -3,8 +3,10 @@ package io.yugurt.booking_platform.security;
 import io.yugurt.booking_platform.domain.enums.UserRole;
 import io.yugurt.booking_platform.domain.nosql.Accommodation;
 import io.yugurt.booking_platform.domain.rdb.Reservation;
+import io.yugurt.booking_platform.exception.AccommodationNotFoundException;
 import io.yugurt.booking_platform.exception.ErrorCode;
 import io.yugurt.booking_platform.exception.ForbiddenException;
+import io.yugurt.booking_platform.exception.ReservationNotFoundException;
 import io.yugurt.booking_platform.repository.nosql.AccommodationRepository;
 import io.yugurt.booking_platform.repository.rdb.ReservationRepository;
 import io.yugurt.booking_platform.security.annotation.RequireOwner;
@@ -37,7 +39,7 @@ public class AuthorizationAspect {
         }
 
         // ADMIN은 모든 리소스 접근 가능
-        if (userContext.getRole() == UserRole.ADMIN) {
+        if (userContext.role() == UserRole.ADMIN) {
 
             return;
         }
@@ -81,12 +83,12 @@ public class AuthorizationAspect {
 
     private void validateAccommodationOwnership(UserContext userContext, String accommodationId) {
         Accommodation accommodation = accommodationRepository.findById(accommodationId)
-            .orElseThrow(() -> new ForbiddenException(ErrorCode.FORBIDDEN));
+            .orElseThrow(AccommodationNotFoundException::new);
 
-        if (!accommodation.getOwnerId().equals(userContext.getUserId())) {
+        if (!accommodation.getOwnerId().equals(userContext.userId())) {
             log.warn(
                 "User {} attempted to access accommodation {} owned by {}",
-                userContext.getUserId(),
+                userContext.userId(),
                 accommodationId,
                 accommodation.getOwnerId()
             );
@@ -97,12 +99,12 @@ public class AuthorizationAspect {
 
     private void validateReservationOwnership(UserContext userContext, String reservationId) {
         Reservation reservation = reservationRepository.findById(Long.parseLong(reservationId))
-            .orElseThrow(() -> new ForbiddenException(ErrorCode.FORBIDDEN));
+            .orElseThrow(ReservationNotFoundException::new);
 
-        if (!reservation.getGuestId().equals(userContext.getUserId())) {
+        if (!reservation.getGuestId().equals(userContext.userId())) {
             log.warn(
                 "User {} attempted to access reservation {} owned by {}",
-                userContext.getUserId(),
+                userContext.userId(),
                 reservationId,
                 reservation.getGuestId()
             );

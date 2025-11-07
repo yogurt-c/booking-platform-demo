@@ -24,5 +24,5 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
         @Param("cancelledStatus") ReservationStatus cancelledStatus
     );
 
-    List<Reservation> findByGuestPhone(String guestPhone);
+    List<Reservation> findByGuestId(String guestId);
 }
