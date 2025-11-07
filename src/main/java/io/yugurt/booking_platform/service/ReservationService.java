@@ -1,0 +1,50 @@
+package io.yugurt.booking_platform.service;
+
+import io.yugurt.booking_platform.domain.enums.ReservationStatus;
+import io.yugurt.booking_platform.domain.rdb.Reservation;
+import io.yugurt.booking_platform.dto.request.ReservationCreateRequest;
+import io.yugurt.booking_platform.dto.response.ReservationResponse;
+import io.yugurt.booking_platform.exception.ReservationConflictException;
+import io.yugurt.booking_platform.repository.rdb.ReservationRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class ReservationService {
+
+    private final ReservationRepository reservationRepository;
+
+    @Transactional
+    public ReservationResponse createReservation(ReservationCreateRequest request) {
+        // 겹치는 예약 검증
+        List<Reservation> conflictingReservations = reservationRepository.findConflictingReservations(
+            request.roomId(),
+            request.checkInDate(),
+            request.checkOutDate(),
+            ReservationStatus.CANCELLED
+        );
+
+        if (!conflictingReservations.isEmpty()) {
+
+            throw new ReservationConflictException();
+        }
+
+        // 예약 등록
+        Reservation reservation = Reservation.builder()
+            .accommodationId(request.accommodationId())
+            .roomId(request.roomId())
+            .guestName(request.guestName())
+            .guestPhone(request.guestPhone())
+            .checkInDate(request.checkInDate())
+            .checkOutDate(request.checkOutDate())
+            .build();
+
+        reservationRepository.save(reservation);
+
+        return ReservationResponse.from(reservation);
+    }
+}
