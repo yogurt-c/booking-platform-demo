@@ -1,6 +1,7 @@
 package io.yugurt.booking_platform.controller;
 
 import io.yugurt.booking_platform.dto.request.RoomCreateRequest;
+import io.yugurt.booking_platform.dto.request.RoomUpdateRequest;
 import io.yugurt.booking_platform.dto.response.RoomDetailResponse;
 import io.yugurt.booking_platform.service.RoomService;
 import jakarta.validation.Valid;
@@ -24,5 +25,13 @@ public class RoomController {
     public RoomDetailResponse getRoom(@PathVariable String id) {
 
         return roomService.getRoom(id);
+    }
+
+    @PutMapping("/{id}")
+    public RoomDetailResponse updateRoom(
+            @PathVariable String id,
+            @Valid @RequestBody RoomUpdateRequest request) {
+
+        return roomService.updateRoom(id, request);
     }
 }

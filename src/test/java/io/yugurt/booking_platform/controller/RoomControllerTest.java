@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.yugurt.booking_platform.domain.nosql.Accommodation;
 import io.yugurt.booking_platform.domain.nosql.Room;
 import io.yugurt.booking_platform.dto.request.RoomCreateRequest;
+import io.yugurt.booking_platform.dto.request.RoomUpdateRequest;
 import io.yugurt.booking_platform.repository.nosql.AccommodationRepository;
 import io.yugurt.booking_platform.repository.nosql.RoomRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -192,5 +193,55 @@ class RoomControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$").isArray())
             .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    @DisplayName("객실 수정 - 성공")
+    void updateRoom() throws Exception {
+        var accommodation = accommodationRepository.save(
+            Accommodation.builder()
+                .name("호텔 신라")
+                .type("호텔")
+                .address("서울특별시 중구")
+                .build()
+        );
+
+        var room = roomRepository.save(
+            Room.builder()
+                .accommodationId(accommodation.getId())
+                .name("스탠다드 더블")
+                .roomType("스탠다드")
+                .pricePerNight(new BigDecimal("100000"))
+                .maxOccupancy(2)
+                .description("기본 객실")
+                .build()
+        );
+
+        String updatedName = "디럭스 더블룸";
+        String updatedRoomType = "디럭스";
+        BigDecimal updatedPrice = new BigDecimal("180000");
+        Integer updatedMaxOccupancy = 3;
+        String updatedDescription = "업그레이드된 디럭스 객실";
+
+        var updateRequest = new RoomUpdateRequest(
+            updatedName,
+            updatedRoomType,
+            updatedPrice,
+            updatedMaxOccupancy,
+            updatedDescription
+        );
+
+        mockMvc.perform(put("/api/rooms/{id}", room.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateRequest)))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(room.getId()))
+            .andExpect(jsonPath("$.accommodationId").value(accommodation.getId()))
+            .andExpect(jsonPath("$.name").value(updatedName))
+            .andExpect(jsonPath("$.roomType").value(updatedRoomType))
+            .andExpect(jsonPath("$.pricePerNight").value(updatedPrice))
+            .andExpect(jsonPath("$.maxOccupancy").value(updatedMaxOccupancy))
+            .andExpect(jsonPath("$.description").value(updatedDescription));
     }
 }
