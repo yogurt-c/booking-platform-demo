@@ -339,4 +339,160 @@ class ReservationControllerTest {
         assert cancelledReservation.isPresent();
         assert cancelledReservation.get().getStatus().name().equals(ReservationStatus.CANCELLED.name());
     }
+
+    @Test
+    @DisplayName("예약 생성 - 체크아웃이 체크인보다 이전이면 실패")
+    void createReservationFailDueToInvalidDate() throws Exception {
+        var accommodation = accommodationRepository.save(
+            Accommodation.builder()
+                .name("호텔 신라")
+                .type("호텔")
+                .address("서울특별시 중구")
+                .build()
+        );
+
+        var room = roomRepository.save(
+            Room.builder()
+                .accommodationId(accommodation.getId())
+                .name("디럭스 더블")
+                .roomType("디럭스")
+                .pricePerNight(new BigDecimal("150000"))
+                .maxOccupancy(2)
+                .build()
+        );
+
+        LocalDate checkInDate = LocalDate.now().plusDays(3);
+        LocalDate checkOutDate = LocalDate.now().plusDays(1); // 체크인보다 이전
+
+        var request = new ReservationCreateRequest(
+            accommodation.getId(),
+            room.getId(),
+            "홍길동",
+            "010-1234-5678",
+            checkInDate,
+            checkOutDate
+        );
+
+        mockMvc.perform(post("/api/reservations")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andDo(print())
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("예약 생성 - 과거 날짜로 예약 시도하면 실패")
+    void createReservationFailDueToPastDate() throws Exception {
+        var accommodation = accommodationRepository.save(
+            Accommodation.builder()
+                .name("호텔 신라")
+                .type("호텔")
+                .address("서울특별시 중구")
+                .build()
+        );
+
+        var room = roomRepository.save(
+            Room.builder()
+                .accommodationId(accommodation.getId())
+                .name("디럭스 더블")
+                .roomType("디럭스")
+                .pricePerNight(new BigDecimal("150000"))
+                .maxOccupancy(2)
+                .build()
+        );
+
+        LocalDate checkInDate = LocalDate.now().minusDays(2); // 과거 날짜
+        LocalDate checkOutDate = LocalDate.now().minusDays(1);
+
+        var request = new ReservationCreateRequest(
+            accommodation.getId(),
+            room.getId(),
+            "홍길동",
+            "010-1234-5678",
+            checkInDate,
+            checkOutDate
+        );
+
+        mockMvc.perform(post("/api/reservations")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andDo(print())
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("예약 취소 - 체크인 당일이면 실패")
+    void cancelReservationFailDueToCheckInDay() throws Exception {
+        var accommodation = accommodationRepository.save(
+            Accommodation.builder()
+                .name("호텔 신라")
+                .type("호텔")
+                .address("서울특별시 중구")
+                .build()
+        );
+
+        var room = roomRepository.save(
+            Room.builder()
+                .accommodationId(accommodation.getId())
+                .name("디럭스 더블")
+                .roomType("디럭스")
+                .pricePerNight(new BigDecimal("150000"))
+                .maxOccupancy(2)
+                .build()
+        );
+
+        // 체크인이 오늘인 예약
+        var reservation = reservationRepository.save(
+            Reservation.builder()
+                .accommodationId(accommodation.getId())
+                .roomId(room.getId())
+                .guestName("홍길동")
+                .guestPhone("010-1234-5678")
+                .checkInDate(LocalDate.now())
+                .checkOutDate(LocalDate.now().plusDays(2))
+                .build()
+        );
+
+        mockMvc.perform(delete("/api/reservations/{id}", reservation.getId()))
+            .andDo(print())
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("예약 취소 - 이미 취소된 예약이면 실패")
+    void cancelReservationFailDueToAlreadyCancelled() throws Exception {
+        var accommodation = accommodationRepository.save(
+            Accommodation.builder()
+                .name("호텔 신라")
+                .type("호텔")
+                .address("서울특별시 중구")
+                .build()
+        );
+
+        var room = roomRepository.save(
+            Room.builder()
+                .accommodationId(accommodation.getId())
+                .name("디럭스 더블")
+                .roomType("디럭스")
+                .pricePerNight(new BigDecimal("150000"))
+                .maxOccupancy(2)
+                .build()
+        );
+
+        var reservation = reservationRepository.save(
+            Reservation.builder()
+                .accommodationId(accommodation.getId())
+                .roomId(room.getId())
+                .guestName("홍길동")
+                .guestPhone("010-1234-5678")
+                .checkInDate(LocalDate.now().plusDays(2))
+                .checkOutDate(LocalDate.now().plusDays(4))
+                .status(ReservationStatus.CANCELLED)  // 이미 취소됨
+                .build()
+        );
+
+        mockMvc.perform(delete("/api/reservations/{id}", reservation.getId()))
+            .andDo(print())
+            .andExpect(status().isBadRequest());
+    }
 }

@@ -67,15 +67,7 @@ public class AccommodationService {
         Accommodation accommodation = accommodationRepository.findById(id)
             .orElseThrow(AccommodationNotFoundException::new);
 
-        accommodation.setName(request.name());
-        accommodation.setType(request.type());
-        accommodation.setAddress(request.address());
-        accommodation.setDescription(request.description());
-        accommodation.setImageUrls(request.imageUrls());
-        accommodation.setAmenities(request.amenities());
-        accommodation.setLatitude(request.latitude());
-        accommodation.setLongitude(request.longitude());
-
+        accommodation.update(request);
         accommodationRepository.save(accommodation);
 
         return AccommodationDetailResponse.from(accommodation);
