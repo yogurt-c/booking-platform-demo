@@ -1,6 +1,14 @@
 package io.yugurt.booking_platform.controller;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.yugurt.booking_platform.domain.enums.ReservationStatus;
 import io.yugurt.booking_platform.domain.nosql.Accommodation;
 import io.yugurt.booking_platform.domain.nosql.Room;
 import io.yugurt.booking_platform.domain.rdb.Reservation;
@@ -8,6 +16,8 @@ import io.yugurt.booking_platform.dto.request.ReservationCreateRequest;
 import io.yugurt.booking_platform.repository.nosql.AccommodationRepository;
 import io.yugurt.booking_platform.repository.nosql.RoomRepository;
 import io.yugurt.booking_platform.repository.rdb.ReservationRepository;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,14 +27,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -292,5 +294,49 @@ class ReservationControllerTest {
             .andExpect(jsonPath("$[1].guestPhone").value(guestPhone))
             .andExpect(jsonPath("$[1].accommodation").exists())
             .andExpect(jsonPath("$[1].room").exists());
+    }
+
+    @Test
+    @DisplayName("예약 취소 - 성공")
+    void cancelReservation() throws Exception {
+        var accommodation = accommodationRepository.save(
+            Accommodation.builder()
+                .name("호텔 신라")
+                .type("호텔")
+                .address("서울특별시 중구")
+                .build()
+        );
+
+        var room = roomRepository.save(
+            Room.builder()
+                .accommodationId(accommodation.getId())
+                .name("디럭스 더블")
+                .roomType("디럭스")
+                .pricePerNight(new BigDecimal("150000"))
+                .maxOccupancy(2)
+                .build()
+        );
+
+        var reservation = reservationRepository.save(
+            Reservation.builder()
+                .accommodationId(accommodation.getId())
+                .roomId(room.getId())
+                .guestName("홍길동")
+                .guestPhone("010-1234-5678")
+                .checkInDate(LocalDate.now().plusDays(1))
+                .checkOutDate(LocalDate.now().plusDays(3))
+                .build()
+        );
+
+        Long reservationId = reservation.getId();
+
+        mockMvc.perform(delete("/api/reservations/{id}", reservationId))
+            .andDo(print())
+            .andExpect(status().isNoContent());
+
+        // DB에서 상태 확인
+        var cancelledReservation = reservationRepository.findById(reservationId);
+        assert cancelledReservation.isPresent();
+        assert cancelledReservation.get().getStatus().name().equals(ReservationStatus.CANCELLED.name());
     }
 }
