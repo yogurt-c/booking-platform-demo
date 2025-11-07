@@ -1,6 +1,7 @@
 package io.yugurt.booking_platform.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.yugurt.booking_platform.config.MockRedisConfig;
 import io.yugurt.booking_platform.domain.enums.Amenity;
 import io.yugurt.booking_platform.domain.nosql.Accommodation;
 import io.yugurt.booking_platform.dto.request.AccommodationCreateRequest;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -29,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Import(MockRedisConfig.class)
 class AccommodationControllerTest {
 
     @Autowired

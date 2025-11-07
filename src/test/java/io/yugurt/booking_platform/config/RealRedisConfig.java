@@ -9,8 +9,12 @@ import org.springframework.context.annotation.Bean;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
+/**
+ * 동시성 테스트 전용 실제 Redis 설정
+ * Testcontainers로 실제 Redis 컨테이너를 띄워 분산 락 동작 검증
+ */
 @TestConfiguration
-public class TestRedisConfig {
+public class RealRedisConfig {
 
     private static GenericContainer<?> redisContainer;
 

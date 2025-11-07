@@ -2,7 +2,7 @@ package io.yugurt.booking_platform.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.yugurt.booking_platform.config.TestRedisConfig;
+import io.yugurt.booking_platform.config.RealRedisConfig;
 import io.yugurt.booking_platform.domain.nosql.Accommodation;
 import io.yugurt.booking_platform.domain.nosql.Room;
 import io.yugurt.booking_platform.dto.request.ReservationCreateRequest;
@@ -21,10 +21,16 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest(classes = TestRedisConfig.class)
+/**
+ * 예약 동시성 테스트
+ * RealRedisConfig를 사용하여 실제 Redis 컨테이너로 분산 락 동작 검증
+ */
+@SpringBootTest
 @ActiveProfiles("test")
+@Import(RealRedisConfig.class)
 class ReservationServiceConcurrencyTest {
 
     @Autowired
