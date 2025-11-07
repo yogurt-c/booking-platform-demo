@@ -5,10 +5,7 @@ import io.yugurt.booking_platform.dto.response.RoomDetailResponse;
 import io.yugurt.booking_platform.service.RoomService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/rooms")
@@ -21,5 +18,11 @@ public class RoomController {
     public RoomDetailResponse createRoom(@Valid @RequestBody RoomCreateRequest request) {
 
         return roomService.createRoom(request);
+    }
+
+    @GetMapping("/{id}")
+    public RoomDetailResponse getRoom(@PathVariable String id) {
+
+        return roomService.getRoom(id);
     }
 }

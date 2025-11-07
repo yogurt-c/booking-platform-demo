@@ -85,4 +85,112 @@ class RoomControllerTest {
             .andExpect(jsonPath("$.maxOccupancy").value(maxOccupancy))
             .andExpect(jsonPath("$.description").value(description));
     }
+
+    @Test
+    @DisplayName("객실 상세 조회 - 성공")
+    void getRoom() throws Exception {
+        var accommodation = accommodationRepository.save(
+            Accommodation.builder()
+                .name("호텔 신라")
+                .type("호텔")
+                .address("서울특별시 중구")
+                .build()
+        );
+
+        String name = "스위트룸";
+        String roomType = "스위트";
+        BigDecimal pricePerNight = new BigDecimal("300000");
+        Integer maxOccupancy = 4;
+        String description = "최고급 스위트 객실";
+
+        var room = roomRepository.save(
+            Room.builder()
+                .accommodationId(accommodation.getId())
+                .name(name)
+                .roomType(roomType)
+                .pricePerNight(pricePerNight)
+                .maxOccupancy(maxOccupancy)
+                .description(description)
+                .build()
+        );
+
+        mockMvc.perform(get("/api/rooms/{id}", room.getId()))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(room.getId()))
+            .andExpect(jsonPath("$.accommodationId").value(accommodation.getId()))
+            .andExpect(jsonPath("$.name").value(name))
+            .andExpect(jsonPath("$.roomType").value(roomType))
+            .andExpect(jsonPath("$.pricePerNight").value(pricePerNight))
+            .andExpect(jsonPath("$.maxOccupancy").value(maxOccupancy))
+            .andExpect(jsonPath("$.description").value(description));
+    }
+
+    @Test
+    @DisplayName("특정 숙소의 객실 목록 조회 - 성공")
+    void getRoomsByAccommodationId() throws Exception {
+        var accommodation = accommodationRepository.save(
+            Accommodation.builder()
+                .name("호텔 신라")
+                .type("호텔")
+                .address("서울특별시 중구")
+                .build()
+        );
+
+        // 3개의 객실 생성
+        roomRepository.save(
+            Room.builder()
+                .accommodationId(accommodation.getId())
+                .name("스탠다드 트윈")
+                .roomType("스탠다드")
+                .pricePerNight(new BigDecimal("100000"))
+                .maxOccupancy(2)
+                .build()
+        );
+        roomRepository.save(
+            Room.builder()
+                .accommodationId(accommodation.getId())
+                .name("디럭스 더블")
+                .roomType("디럭스")
+                .pricePerNight(new BigDecimal("150000"))
+                .maxOccupancy(2)
+                .build()
+        );
+        roomRepository.save(
+            Room.builder()
+                .accommodationId(accommodation.getId())
+                .name("스위트")
+                .roomType("스위트")
+                .pricePerNight(new BigDecimal("300000"))
+                .maxOccupancy(4)
+                .build()
+        );
+
+        mockMvc.perform(get("/api/accommodations/{accommodationId}/rooms", accommodation.getId()))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isArray())
+            .andExpect(jsonPath("$.length()").value(3))
+            .andExpect(jsonPath("$[0].accommodationId").value(accommodation.getId()))
+            .andExpect(jsonPath("$[1].accommodationId").value(accommodation.getId()))
+            .andExpect(jsonPath("$[2].accommodationId").value(accommodation.getId()));
+    }
+
+    @Test
+    @DisplayName("특정 숙소의 객실 목록 조회 - 빈 결과")
+    void getRoomsByAccommodationIdEmpty() throws Exception {
+        var accommodation = accommodationRepository.save(
+            Accommodation.builder()
+                .name("호텔 신라")
+                .type("호텔")
+                .address("서울특별시 중구")
+                .build()
+        );
+
+        mockMvc.perform(get("/api/accommodations/{accommodationId}/rooms", accommodation.getId()))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$").isArray())
+            .andExpect(jsonPath("$.length()").value(0));
+    }
 }

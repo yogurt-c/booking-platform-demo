@@ -8,7 +8,8 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum ErrorCode {
 
-    ACCOM_NOT_FOUND("해당 숙박 업소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+    ACCOM_NOT_FOUND("해당 숙박 업소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    ROOM_NOT_FOUND("해당 객실을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
 
     private final String description;
     private final HttpStatus status;

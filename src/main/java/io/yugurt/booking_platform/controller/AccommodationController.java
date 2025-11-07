@@ -6,11 +6,15 @@ import io.yugurt.booking_platform.dto.request.CursorPageRequest;
 import io.yugurt.booking_platform.dto.response.AccommodationDetailResponse;
 import io.yugurt.booking_platform.dto.response.AccommodationSummaryResponse;
 import io.yugurt.booking_platform.dto.response.CursorPageResponse;
+import io.yugurt.booking_platform.dto.response.RoomDetailResponse;
 import io.yugurt.booking_platform.service.AccommodationService;
+import io.yugurt.booking_platform.service.RoomService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/accommodations")
@@ -18,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 public class AccommodationController {
 
     private final AccommodationService accommodationService;
+    private final RoomService roomService;
 
     @PostMapping
     public AccommodationDetailResponse createAccommodation(@Valid @RequestBody AccommodationCreateRequest request) {
@@ -50,5 +55,11 @@ public class AccommodationController {
     public void deleteAccommodation(@PathVariable String id) {
 
         accommodationService.deleteAccommodation(id);
+    }
+
+    @GetMapping("/{accommodationId}/rooms")
+    public List<RoomDetailResponse> getRoomsByAccommodationId(@PathVariable String accommodationId) {
+
+        return roomService.getRoomsByAccommodationId(accommodationId);
     }
 }
