@@ -9,6 +9,9 @@ import io.yugurt.booking_platform.dto.response.AccommodationSummaryResponse;
 import io.yugurt.booking_platform.dto.response.CursorPageResponse;
 import io.yugurt.booking_platform.exception.AccommodationNotFoundException;
 import io.yugurt.booking_platform.repository.nosql.AccommodationRepository;
+import io.yugurt.booking_platform.security.UserContext;
+import io.yugurt.booking_platform.security.annotation.RequireOwner;
+import io.yugurt.booking_platform.security.annotation.ResourceType;
 import io.yugurt.booking_platform.util.MongoCursorQueryBuilder;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -23,8 +26,12 @@ public class AccommodationService {
     private final AccommodationRepository accommodationRepository;
     private final MongoTemplate mongoTemplate;
 
-    public AccommodationDetailResponse createAccommodation(AccommodationCreateRequest request) {
+    public AccommodationDetailResponse createAccommodation(UserContext user, AccommodationCreateRequest request) {
+        // 현재 사용자를 소유자로 설정
+        String ownerId = user.userId();
+
         Accommodation accommodation = Accommodation.builder()
+            .ownerId(ownerId)
             .name(request.name())
             .type(request.type())
             .address(request.address())
@@ -63,6 +70,7 @@ public class AccommodationService {
         );
     }
 
+    @RequireOwner(resourceType = ResourceType.ACCOMMODATION)
     public AccommodationDetailResponse updateAccommodation(String id, AccommodationUpdateRequest request) {
         Accommodation accommodation = accommodationRepository.findById(id)
             .orElseThrow(AccommodationNotFoundException::new);
@@ -73,6 +81,7 @@ public class AccommodationService {
         return AccommodationDetailResponse.from(accommodation);
     }
 
+    @RequireOwner(resourceType = ResourceType.ACCOMMODATION)
     public void deleteAccommodation(String id) {
         Accommodation accommodation = accommodationRepository.findById(id)
             .orElseThrow(AccommodationNotFoundException::new);

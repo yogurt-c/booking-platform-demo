@@ -5,11 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target(ElementType.METHOD)
+@Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface RequireOwner {
+public @interface CurrentUser {
 
-    ResourceType resourceType();
-
-    String resourceIdParam() default "id"; // 메서드 파라미터 이름
 }
