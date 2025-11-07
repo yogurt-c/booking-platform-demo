@@ -45,6 +45,9 @@ public class Reservation {
     private String roomId;
 
     @Column(nullable = false)
+    private String guestId;  // 예약한 게스트 ID (GUEST)
+
+    @Column(nullable = false)
     private String guestName;
 
     @Column(nullable = false)

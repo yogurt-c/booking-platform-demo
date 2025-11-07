@@ -24,6 +24,8 @@ public class Accommodation {
     @Id
     private String id;
 
+    private String ownerId;  // 숙소 소유자 ID (HOST)
+
     private String name;
 
     private String type;
