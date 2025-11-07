@@ -2,7 +2,6 @@ package io.yugurt.booking_platform.dto.response;
 
 import io.yugurt.booking_platform.domain.enums.ReservationStatus;
 import io.yugurt.booking_platform.domain.rdb.Reservation;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -18,6 +17,7 @@ public record ReservationResponse(
     LocalDateTime createdAt,
     LocalDateTime updatedAt
 ) {
+
     public static ReservationResponse from(Reservation reservation) {
         return new ReservationResponse(
             reservation.getId(),

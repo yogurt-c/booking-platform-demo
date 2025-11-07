@@ -1,7 +1,6 @@
 package io.yugurt.booking_platform.dto.response;
 
 import io.yugurt.booking_platform.domain.nosql.Room;
-
 import java.math.BigDecimal;
 
 public record RoomDetailResponse(

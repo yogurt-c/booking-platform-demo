@@ -9,6 +9,7 @@ public record CursorPageResponse<T>(
     boolean hasNext,
     int size
 ) {
+
     public static <T> CursorPageResponse<T> of(
         List<T> results,
         int requestedSize,

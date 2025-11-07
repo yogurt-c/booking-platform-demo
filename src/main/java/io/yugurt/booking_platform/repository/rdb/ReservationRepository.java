@@ -2,12 +2,11 @@ package io.yugurt.booking_platform.repository.rdb;
 
 import io.yugurt.booking_platform.domain.enums.ReservationStatus;
 import io.yugurt.booking_platform.domain.rdb.Reservation;
+import java.time.LocalDate;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.time.LocalDate;
-import java.util.List;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
@@ -21,4 +20,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
         @Param("checkOutDate") LocalDate checkOutDate,
         @Param("cancelledStatus") ReservationStatus cancelledStatus
     );
+
+    List<Reservation> findByGuestPhone(String guestPhone);
 }

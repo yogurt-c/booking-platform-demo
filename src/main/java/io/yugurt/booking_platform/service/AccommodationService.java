@@ -10,12 +10,11 @@ import io.yugurt.booking_platform.dto.response.CursorPageResponse;
 import io.yugurt.booking_platform.exception.AccommodationNotFoundException;
 import io.yugurt.booking_platform.repository.nosql.AccommodationRepository;
 import io.yugurt.booking_platform.util.MongoCursorQueryBuilder;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor

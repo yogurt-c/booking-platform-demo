@@ -2,7 +2,6 @@ package io.yugurt.booking_platform.dto.request;
 
 import io.yugurt.booking_platform.domain.enums.Amenity;
 import jakarta.validation.constraints.NotBlank;
-
 import java.util.List;
 import java.util.Set;
 
@@ -26,4 +25,5 @@ public record AccommodationCreateRequest(
 
     Double longitude
 ) {
+
 }

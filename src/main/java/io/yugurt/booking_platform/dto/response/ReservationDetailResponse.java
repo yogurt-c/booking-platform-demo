@@ -4,7 +4,6 @@ import io.yugurt.booking_platform.domain.enums.ReservationStatus;
 import io.yugurt.booking_platform.domain.nosql.Accommodation;
 import io.yugurt.booking_platform.domain.nosql.Room;
 import io.yugurt.booking_platform.domain.rdb.Reservation;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 

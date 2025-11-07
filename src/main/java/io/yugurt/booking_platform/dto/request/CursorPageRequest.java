@@ -10,6 +10,7 @@ public record CursorPageRequest(
     @Max(value = 100, message = "페이지 크기는 최대 100 이하여야 합니다")
     Integer size
 ) {
+
     public CursorPageRequest(String cursor, Integer size) {
         this.cursor = cursor;
         this.size = (size != null) ? size : 20;
