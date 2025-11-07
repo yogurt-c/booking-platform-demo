@@ -165,7 +165,7 @@ class AccommodationControllerTest {
         String cursor = sortedList.get(0).getId();
 
         mockMvc.perform(get("/api/accommodations")
-//                            .param("cursor", cursor)
+                            .param("cursor", cursor)
                             .param("size", "2"))
             .andDo(print())
             .andExpect(status().isOk())
