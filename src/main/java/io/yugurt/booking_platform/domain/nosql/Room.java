@@ -32,9 +32,7 @@ public class Room {
 
     private String description;
 
-    /**
-     * 객실 정보를 수정합니다.
-     */
+
     public void update(RoomUpdateRequest request) {
         this.name = request.name();
         this.roomType = request.roomType();

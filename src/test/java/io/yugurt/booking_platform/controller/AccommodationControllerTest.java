@@ -1,34 +1,40 @@
 package io.yugurt.booking_platform.controller;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.yugurt.booking_platform.config.MockRedisConfig;
 import io.yugurt.booking_platform.domain.enums.Amenity;
+import io.yugurt.booking_platform.domain.enums.UserRole;
 import io.yugurt.booking_platform.domain.nosql.Accommodation;
 import io.yugurt.booking_platform.dto.request.AccommodationCreateRequest;
 import io.yugurt.booking_platform.dto.request.AccommodationUpdateRequest;
 import io.yugurt.booking_platform.exception.ErrorCode;
 import io.yugurt.booking_platform.repository.nosql.AccommodationRepository;
+import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.List;
-import java.util.Set;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Import(MockRedisConfig.class)
 class AccommodationControllerTest {
 
     @Autowired
@@ -39,6 +45,8 @@ class AccommodationControllerTest {
 
     @Autowired
     private AccommodationRepository accommodationRepository;
+
+    private final String HOST_ID = "HOST-001";
 
     @BeforeEach
     void setUp() {
@@ -60,8 +68,10 @@ class AccommodationControllerTest {
         );
 
         mockMvc.perform(post("/api/accommodations")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-User-Id", HOST_ID)
+                .header("X-User-Role", UserRole.HOST)
+                .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").exists())
@@ -140,7 +150,7 @@ class AccommodationControllerTest {
         }
 
         mockMvc.perform(get("/api/accommodations")
-                            .param("size", "3"))
+                .param("size", "3"))
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content").isArray())
@@ -165,8 +175,8 @@ class AccommodationControllerTest {
         String cursor = sortedList.get(0).getId();
 
         mockMvc.perform(get("/api/accommodations")
-                            .param("cursor", cursor)
-                            .param("size", "2"))
+                .param("cursor", cursor)
+                .param("size", "2"))
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content").isArray())
@@ -194,6 +204,7 @@ class AccommodationControllerTest {
         var accommodation = accommodationRepository.save(
             Accommodation.builder()
                 .name(originalName)
+                .ownerId(HOST_ID)
                 .type(originalType)
                 .address("서울특별시 중구")
                 .amenities(Set.of(Amenity.WIFI))
@@ -221,8 +232,10 @@ class AccommodationControllerTest {
         );
 
         mockMvc.perform(put("/api/accommodations/{id}", accommodation.getId())
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-User-Id", HOST_ID)
+                .header("X-User-Role", UserRole.HOST)
+                .content(objectMapper.writeValueAsString(updateRequest)))
             .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(accommodation.getId()))
@@ -253,8 +266,10 @@ class AccommodationControllerTest {
         );
 
         mockMvc.perform(put("/api/accommodations/{id}", nonExistentId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-User-Id", HOST_ID)
+                .header("X-User-Role", UserRole.HOST)
+                .content(objectMapper.writeValueAsString(updateRequest)))
             .andDo(print())
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.errorCode").value(ErrorCode.ACCOM_NOT_FOUND.name()));
@@ -265,13 +280,16 @@ class AccommodationControllerTest {
     void deleteAccommodation() throws Exception {
         var accommodation = accommodationRepository.save(
             Accommodation.builder()
+                .ownerId(HOST_ID)
                 .name("호텔 신라")
                 .type("호텔")
                 .address("서울특별시 중구")
                 .build()
         );
 
-        mockMvc.perform(delete("/api/accommodations/{id}", accommodation.getId()))
+        mockMvc.perform(delete("/api/accommodations/{id}", accommodation.getId())
+                .header("X-User-Id", HOST_ID)
+                .header("X-User-Role", UserRole.HOST))
             .andDo(print())
             .andExpect(status().isNoContent());
 
@@ -284,7 +302,9 @@ class AccommodationControllerTest {
     void deleteAccommodationNotFound() throws Exception {
         String nonExistentId = "id-not-exists";
 
-        mockMvc.perform(delete("/api/accommodations/{id}", nonExistentId))
+        mockMvc.perform(delete("/api/accommodations/{id}", nonExistentId)
+                .header("X-User-Id", HOST_ID)
+                .header("X-User-Role", UserRole.HOST))
             .andDo(print())
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.errorCode").value(ErrorCode.ACCOM_NOT_FOUND.name()));

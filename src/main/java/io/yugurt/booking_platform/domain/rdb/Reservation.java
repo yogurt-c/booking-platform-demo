@@ -45,6 +45,9 @@ public class Reservation {
     private String roomId;
 
     @Column(nullable = false)
+    private String guestId;  // 예약한 게스트 ID (GUEST)
+
+    @Column(nullable = false)
     private String guestName;
 
     @Column(nullable = false)
@@ -68,7 +71,7 @@ public class Reservation {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    
+
     public void cancel(LocalDate today) {
         validateNotCancelled();
         validateCancellationDeadline(today);
@@ -77,13 +80,16 @@ public class Reservation {
 
     private void validateNotCancelled() {
         if (this.status == ReservationStatus.CANCELLED) {
+
             throw new AlreadyCancelledReservationException();
         }
     }
 
     private void validateCancellationDeadline(LocalDate today) {
         LocalDate deadline = this.checkInDate.minusDays(CANCELLATION_DEADLINE_DAYS);
+
         if (today.isAfter(deadline)) {
+
             throw new CannotCancelReservationException();
         }
     }

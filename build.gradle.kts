@@ -37,6 +37,12 @@ dependencies {
     // redis
     implementation("org.redisson:redisson-spring-boot-starter:3.35.0")
 
+    // security
+    implementation("org.springframework.boot:spring-boot-starter-security")
+
+    // aop
+    implementation("org.springframework.boot:spring-boot-starter-aop")
+
     // lombok
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
@@ -51,4 +57,8 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+tasks.withType<JavaCompile> {
+    options.compilerArgs.add("-parameters")
 }

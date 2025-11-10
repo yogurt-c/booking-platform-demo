@@ -3,6 +3,8 @@ package io.yugurt.booking_platform.controller;
 import io.yugurt.booking_platform.dto.request.RoomCreateRequest;
 import io.yugurt.booking_platform.dto.request.RoomUpdateRequest;
 import io.yugurt.booking_platform.dto.response.RoomDetailResponse;
+import io.yugurt.booking_platform.security.UserContext;
+import io.yugurt.booking_platform.security.annotation.CurrentUser;
 import io.yugurt.booking_platform.service.RoomService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,9 +27,9 @@ public class RoomController {
     private final RoomService roomService;
 
     @PostMapping
-    public RoomDetailResponse createRoom(@Valid @RequestBody RoomCreateRequest request) {
+    public RoomDetailResponse createRoom(@Valid @RequestBody RoomCreateRequest request, @CurrentUser UserContext user) {
 
-        return roomService.createRoom(request);
+        return roomService.createRoom(user, request);
     }
 
     @GetMapping("/{id}")
@@ -39,15 +41,16 @@ public class RoomController {
     @PutMapping("/{id}")
     public RoomDetailResponse updateRoom(
         @PathVariable String id,
-        @Valid @RequestBody RoomUpdateRequest request) {
+        @Valid @RequestBody RoomUpdateRequest request,
+        @CurrentUser UserContext user) {
 
-        return roomService.updateRoom(id, request);
+        return roomService.updateRoom(user, id, request);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteRoom(@PathVariable String id) {
+    public void deleteRoom(@PathVariable String id, @CurrentUser UserContext user) {
 
-        roomService.deleteRoom(id);
+        roomService.deleteRoom(user, id);
     }
 }
