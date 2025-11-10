@@ -1,32 +1,38 @@
 package io.yugurt.booking_platform.controller;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.yugurt.booking_platform.config.MockRedisConfig;
+import io.yugurt.booking_platform.domain.enums.UserRole;
 import io.yugurt.booking_platform.domain.nosql.Accommodation;
 import io.yugurt.booking_platform.domain.nosql.Room;
 import io.yugurt.booking_platform.dto.request.RoomCreateRequest;
 import io.yugurt.booking_platform.dto.request.RoomUpdateRequest;
 import io.yugurt.booking_platform.repository.nosql.AccommodationRepository;
 import io.yugurt.booking_platform.repository.nosql.RoomRepository;
+import java.math.BigDecimal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.math.BigDecimal;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Import(MockRedisConfig.class)
 class RoomControllerTest {
 
     @Autowired
@@ -41,6 +47,8 @@ class RoomControllerTest {
     @Autowired
     private AccommodationRepository accommodationRepository;
 
+    private final String HOST_ID = "HOST-001";
+
     @BeforeEach
     void setUp() {
         roomRepository.deleteAll();
@@ -52,6 +60,7 @@ class RoomControllerTest {
     void createRoom() throws Exception {
         var accommodation = accommodationRepository.save(
             Accommodation.builder()
+                .ownerId(HOST_ID)
                 .name("호텔 신라")
                 .type("호텔")
                 .address("서울특별시 중구")
@@ -75,6 +84,8 @@ class RoomControllerTest {
 
         mockMvc.perform(post("/api/rooms")
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("X-User-Id", HOST_ID)
+                .header("X-User-Role", UserRole.HOST)
                 .content(objectMapper.writeValueAsString(request)))
             .andDo(print())
             .andExpect(status().isOk())
@@ -200,6 +211,7 @@ class RoomControllerTest {
     void updateRoom() throws Exception {
         var accommodation = accommodationRepository.save(
             Accommodation.builder()
+                .ownerId(HOST_ID)
                 .name("호텔 신라")
                 .type("호텔")
                 .address("서울특별시 중구")
@@ -233,6 +245,8 @@ class RoomControllerTest {
 
         mockMvc.perform(put("/api/rooms/{id}", room.getId())
                 .contentType(MediaType.APPLICATION_JSON)
+                .header("X-User-Id", HOST_ID)
+                .header("X-User-Role", UserRole.HOST)
                 .content(objectMapper.writeValueAsString(updateRequest)))
             .andDo(print())
             .andExpect(status().isOk())
@@ -250,6 +264,7 @@ class RoomControllerTest {
     void deleteRoom() throws Exception {
         var accommodation = accommodationRepository.save(
             Accommodation.builder()
+                .ownerId(HOST_ID)
                 .name("호텔 신라")
                 .type("호텔")
                 .address("서울특별시 중구")
@@ -269,7 +284,9 @@ class RoomControllerTest {
 
         String roomId = room.getId();
 
-        mockMvc.perform(delete("/api/rooms/{id}", roomId))
+        mockMvc.perform(delete("/api/rooms/{id}", roomId)
+                .header("X-User-Id", HOST_ID)
+                .header("X-User-Role", UserRole.HOST))
             .andDo(print())
             .andExpect(status().isNoContent());
 

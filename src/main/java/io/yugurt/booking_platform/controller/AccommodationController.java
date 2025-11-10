@@ -7,6 +7,8 @@ import io.yugurt.booking_platform.dto.response.AccommodationDetailResponse;
 import io.yugurt.booking_platform.dto.response.AccommodationSummaryResponse;
 import io.yugurt.booking_platform.dto.response.CursorPageResponse;
 import io.yugurt.booking_platform.dto.response.RoomDetailResponse;
+import io.yugurt.booking_platform.security.UserContext;
+import io.yugurt.booking_platform.security.annotation.CurrentUser;
 import io.yugurt.booking_platform.service.AccommodationService;
 import io.yugurt.booking_platform.service.RoomService;
 import jakarta.validation.Valid;
@@ -33,9 +35,10 @@ public class AccommodationController {
     private final RoomService roomService;
 
     @PostMapping
-    public AccommodationDetailResponse createAccommodation(@Valid @RequestBody AccommodationCreateRequest request) {
+    public AccommodationDetailResponse createAccommodation(@Valid @RequestBody AccommodationCreateRequest request,
+                                                           @CurrentUser UserContext user) {
 
-        return accommodationService.createAccommodation(request);
+        return accommodationService.createAccommodation(user, request);
     }
 
     @GetMapping("/{id}")

@@ -10,7 +10,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @TestConfiguration
-public class TestRedisConfig {
+public class RealRedisConfig {
 
     private static GenericContainer<?> redisContainer;
 

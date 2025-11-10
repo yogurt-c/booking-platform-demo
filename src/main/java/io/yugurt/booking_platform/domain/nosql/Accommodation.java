@@ -24,6 +24,8 @@ public class Accommodation {
     @Id
     private String id;
 
+    private String ownerId;  // 숙소 소유자 ID (HOST)
+
     private String name;
 
     private String type;
@@ -42,9 +44,7 @@ public class Accommodation {
 
     private Double longitude;
 
-    /**
-     * 숙박 업소 정보를 수정합니다.
-     */
+
     public void update(AccommodationUpdateRequest request) {
         this.name = request.name();
         this.type = request.type();
