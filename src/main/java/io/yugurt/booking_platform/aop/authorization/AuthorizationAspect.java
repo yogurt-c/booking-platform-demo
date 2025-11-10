@@ -1,4 +1,4 @@
-package io.yugurt.booking_platform.security;
+package io.yugurt.booking_platform.aop.authorization;
 
 import io.yugurt.booking_platform.domain.enums.UserRole;
 import io.yugurt.booking_platform.domain.nosql.Accommodation;
@@ -9,8 +9,8 @@ import io.yugurt.booking_platform.exception.ForbiddenException;
 import io.yugurt.booking_platform.exception.ReservationNotFoundException;
 import io.yugurt.booking_platform.repository.nosql.AccommodationRepository;
 import io.yugurt.booking_platform.repository.rdb.ReservationRepository;
-import io.yugurt.booking_platform.security.annotation.RequireOwner;
-import io.yugurt.booking_platform.security.annotation.ResourceType;
+import io.yugurt.booking_platform.security.UserContext;
+import io.yugurt.booking_platform.security.UserContextHolder;
 import java.lang.reflect.Parameter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

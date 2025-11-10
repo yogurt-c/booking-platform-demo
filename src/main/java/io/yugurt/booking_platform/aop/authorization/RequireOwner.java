@@ -1,4 +1,4 @@
-package io.yugurt.booking_platform.security.annotation;
+package io.yugurt.booking_platform.aop.authorization;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
