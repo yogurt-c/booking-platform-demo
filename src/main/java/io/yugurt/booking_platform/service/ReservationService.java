@@ -1,5 +1,8 @@
 package io.yugurt.booking_platform.service;
 
+import io.yugurt.booking_platform.aop.authorization.RequireOwner;
+import io.yugurt.booking_platform.aop.authorization.ResourceType;
+import io.yugurt.booking_platform.aop.lock.DistributedLock;
 import io.yugurt.booking_platform.domain.enums.ReservationStatus;
 import io.yugurt.booking_platform.domain.nosql.Accommodation;
 import io.yugurt.booking_platform.domain.nosql.Room;
@@ -17,62 +20,32 @@ import io.yugurt.booking_platform.repository.nosql.AccommodationRepository;
 import io.yugurt.booking_platform.repository.nosql.RoomRepository;
 import io.yugurt.booking_platform.repository.rdb.ReservationRepository;
 import io.yugurt.booking_platform.security.UserContext;
-import io.yugurt.booking_platform.security.annotation.RequireOwner;
-import io.yugurt.booking_platform.security.annotation.ResourceType;
 import io.yugurt.booking_platform.util.DateTimeUtil;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 @RequiredArgsConstructor
 public class ReservationService {
 
-    private static final String LOCK_KEY_PREFIX = "reservation:lock:";
-    private static final long LOCK_WAIT_TIME_SECONDS = 10L;
-    private static final long LOCK_LEASE_TIME_SECONDS = 10L;
-
     private final ReservationRepository reservationRepository;
     private final AccommodationRepository accommodationRepository;
     private final RoomRepository roomRepository;
-    private final RedissonClient redissonClient;
-    private final TransactionTemplate transactionTemplate;
 
+    @DistributedLock(key = "#request.roomId()")
     public ReservationResponse createReservation(UserContext user, ReservationCreateRequest request) {
         validateReservationDates(request.checkInDate(), request.checkOutDate());
 
-        String lockKey = LOCK_KEY_PREFIX + request.roomId();
-        RLock lock = redissonClient.getLock(lockKey);
+        validateNoConflictingReservations(request);
+        Reservation reservation = createReservationEntity(user, request);
+        reservationRepository.save(reservation);
 
-        try {
-            boolean acquired = lock.tryLock(LOCK_WAIT_TIME_SECONDS, LOCK_LEASE_TIME_SECONDS, TimeUnit.SECONDS);
-            if (!acquired) {
-                throw new ReservationConflictException();
-            }
-
-            try {
-                return transactionTemplate.execute(status -> {
-                    validateNoConflictingReservations(request);
-                    Reservation reservation = createReservationEntity(user, request);
-                    reservationRepository.save(reservation);
-
-                    return ReservationResponse.from(reservation);
-                });
-            } finally {
-                lock.unlock();
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new ReservationConflictException();
-        }
+        return ReservationResponse.from(reservation);
     }
 
     private void validateNoConflictingReservations(ReservationCreateRequest request) {
