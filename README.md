@@ -92,8 +92,12 @@
 
 ### 1. 하이브리드 데이터베이스
 
-- **MongoDB**: 숙박 시설/객실 - 빠른 조회 성능
-- **H2**: 예약 정보 - 트랜잭션 보장
+| 데이터 | 저장소 | 선택 이유 |
+|--------|--------|-----------|
+| 숙박 시설 / 객실 | MongoDB (NoSQL) | 이미지 URL, 편의시설 목록 등 스키마가 유동적이고 조회 빈도가 높음. 도큐먼트 모델이 중첩 구조 표현에 적합 |
+| 예약 정보 | H2 (RDB) | 날짜 범위 충돌 검증, 취소 정책 등 비즈니스 규칙이 복잡하고 트랜잭션 무결성이 필수. 비관적 락(PESSIMISTIC_WRITE)으로 동시성 제어 |
+
+조회 패턴과 데이터 특성에 따라 저장소를 분리해 각 기술의 강점을 활용하는 하이브리드 설계를 적용했습니다.
 
 ### 2. AOP 기반 횡단 관심사
 
@@ -146,9 +150,19 @@ io.yugurt.booking_platform
 ### 사전 요구사항
 
 - Java 17
-- MongoDB (`localhost:27017`)
+- Docker (MongoDB, Redis 실행용)
 
-### 실행
+### 인프라 실행 (Docker)
+
+```bash
+# MongoDB
+docker run -d --name mongo -p 27017:27017 mongo:latest
+
+# Redis
+docker run -d --name redis -p 6379:6379 redis:latest
+```
+
+### 애플리케이션 실행
 
 ```bash
 ./gradlew bootRun
@@ -156,12 +170,31 @@ io.yugurt.booking_platform
 
 ## 주요 비즈니스 로직
 
-### 예약 생성 프로세스
+### 예약 생성 프로세스 (동시성 제어 흐름)
 
-1. 날짜 유효성 검증 (과거 날짜, 체크아웃 > 체크인)
-2. 분산 락 획득 (roomId 기준)
-3. 예약 중복 검증
-4. 트랜잭션 커밋 후 락 해제
+```
+예약 요청
+  │
+  ▼
+[DistributedLockAspect]
+  roomId 기준 Redisson 락 획득 시도 (wait 10s / lease 10s)
+  락 획득 실패 → ReservationConflictException 즉시 반환
+  │
+  ▼
+[AopForTransaction - 새 트랜잭션 시작]
+  1. 날짜 유효성 검증 (과거 날짜, 체크아웃 > 체크인)
+  2. DB 비관적 락으로 충돌 예약 조회 (PESSIMISTIC_WRITE)
+  3. 충돌 없으면 예약 엔티티 저장
+  │
+  ▼
+[트랜잭션 커밋]
+  │
+  ▼
+[락 해제]
+```
+
+락 해제를 트랜잭션 커밋 이후에 수행하기 위해 `AopForTransaction`으로 내부 트랜잭션을 분리했습니다.
+락을 먼저 해제하면 커밋 전에 다른 요청이 진입해 중복 예약이 발생할 수 있기 때문입니다.
 
 ### 예약 취소 규칙
 
